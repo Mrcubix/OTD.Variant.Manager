@@ -11,5 +11,8 @@
 
     <Application.Styles>
         <FluentTheme />
+
+        <!--<StyleInclude Source="avares://OpenTabletDriver.External.Avalonia/Themes/Default/Default.axaml" />-->
+        <StyleInclude Source="Themes/GreynmeDark/GreynmeDark.axaml" />
     </Application.Styles>
 </Application>
