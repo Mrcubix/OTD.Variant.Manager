@@ -1,0 +1,71 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="clr-namespace:OTD.Variant.Manager.UX.ViewModels.Menus"
+             xmlns:menus="clr-namespace:OTD.Variant.Manager.UX.Controls.Menus"
+             xmlns:views="clr-namespace:OTD.Variant.Manager.UX.Views.Menus"
+             mc:Ignorable="d" d:DesignWidth="720" d:DesignHeight="600"
+             x:Class="OTD.Variant.Manager.UX.Views.Menus.DeviceSelectionView"
+             x:DataType="vm:DeviceSelectionViewModel">
+
+  <Design.DataContext>
+    <vm:DeviceSelectionViewModel />
+  </Design.DataContext>
+
+  <UserControl.Styles>
+    <Style Selector="Button#VIEW_BackButton">
+      <Setter Property="VerticalContentAlignment" Value="Center" />
+      <Setter Property="Background" Value="Transparent" />
+      <Setter Property="BorderBrush" Value="Transparent" />
+      <Setter Property="Margin" Value="0" />
+      <Setter Property="Padding" Value="9, 8, 9, 9" />
+    </Style>
+    <Style Selector="TextBox#VIEW_SearchBar">
+      <Setter Property="VerticalContentAlignment" Value="Center" />
+      <Setter Property="BorderBrush" Value="{StaticResource InputBorderColorBrush}" />
+      <Setter Property="Margin" Value="4, 0" />
+    </Style>
+  </UserControl.Styles>
+
+  <ContentControl Content="{Binding NextViewModel}">
+    <ContentControl.DataTemplates>
+
+      <!-- We display the view's content whenever the designated viewmodel get passed, otherwise, we show the next page -->
+      <DataTemplate DataType="vm:DeviceSelectionViewModel">
+        <Grid RowDefinitions="Auto, Auto, *">
+          <TextBlock Name="VIEW_Header" Text="{Binding Path}" FontSize="20" Margin="8,12" 
+                    Grid.Row="0" />
+          
+          <Grid ColumnDefinitions="Auto, *, Auto" Grid.Row="1">
+
+            <Button Name="VIEW_BackButton" Content="←" Command="{Binding GoBackCommand}" Grid.Column="0" />
+            <TextBox Name="VIEW_SearchBar" Watermark="{Binding SearchBarWatermark}" Text="{Binding SearchText}" 
+                     Margin="12" Grid.Column="1" />
+            <TextBlock Text="" Grid.Column="2" Width="35" Height="35" />
+
+          </Grid>
+
+          <ScrollViewer Grid.Row="2">
+            <!-- Here we show the list of manufacturer a user may pick from -->
+            <ItemsControl ItemsSource="{Binding CurrentDeviceEntries}">
+              <ItemsControl.ItemTemplate>
+                <DataTemplate>
+                  <menus:MenuEntry />
+                </DataTemplate>
+              </ItemsControl.ItemTemplate>
+            </ItemsControl>
+
+          </ScrollViewer>
+        </Grid>
+      </DataTemplate>
+
+      <!-- The next page in question -->
+      <!--<DataTemplate DataType="vm:DeviceSelectionViewModel">
+        <views:DeviceSelectionView />
+      </DataTemplate>-->
+
+    </ContentControl.DataTemplates>
+  </ContentControl>
+
+</UserControl>

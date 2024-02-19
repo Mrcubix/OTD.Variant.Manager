@@ -1,8 +1,39 @@
-﻿namespace OTD.Variant.Manager.UX.ViewModels;
+﻿using System;
+using System.Collections.Generic;
+using System.Collections.ObjectModel;
+using System.Linq;
+using CommunityToolkit.Mvvm.ComponentModel;
+using OTD.Variant.Manager.Configurations;
+using OTD.Variant.Manager.UX.ViewModels.Menus;
 
-public class MainViewModel : ViewModelBase
+namespace OTD.Variant.Manager.UX.ViewModels;
+
+#nullable enable
+
+public partial class MainViewModel : NavigableViewModel
 {
-#pragma warning disable CA1822 // Mark members as static
-    public string Greeting => "Welcome to Avalonia!";
-#pragma warning restore CA1822 // Mark members as static
+    #region Constructors
+
+    public MainViewModel()
+    {
+        NextViewModel = new ManufacturerSelectionViewModel();
+        CanGoBack = false;
+    }
+
+    #endregion
+
+    #region Events
+
+    public override event EventHandler? BackRequested;
+
+    #endregion
+
+    #region Parent Implementations
+
+    protected override void GoBack()
+    {
+        BackRequested?.Invoke(this, EventArgs.Empty);
+    }
+
+    #endregion
 }
