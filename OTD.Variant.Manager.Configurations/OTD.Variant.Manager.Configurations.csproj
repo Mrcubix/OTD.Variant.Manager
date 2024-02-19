@@ -1,7 +1,8 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>net8.0</TargetFramework>
+    <TargetFramework>net6.0</TargetFramework>
+    <IgnoreWarnings>CS8632</IgnoreWarnings>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
   </PropertyGroup>
@@ -12,6 +13,13 @@
 
   <ItemGroup>
     <ProjectReference Include="../.modules/OpenTabletDriver/OpenTabletDriver.Desktop/OpenTabletDriver.Desktop.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- Include the Configurations Folder in the binaries -->
+    <Content Include="Configurations\**\*.*">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
   </ItemGroup>
 
 </Project>
