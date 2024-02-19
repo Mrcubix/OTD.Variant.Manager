@@ -7,6 +7,7 @@
         mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
         x:Class="OTD.Variant.Manager.UX.Views.MainWindow"
         Icon="/Assets/avalonia-logo.ico"
-        Title="OTD.Variant.Manager.UX">
+        Title="OpenTabletDriver Variant Manager"
+        Background="{StaticResource BodyColorBrush}">
         <views:MainView />
 </Window>
