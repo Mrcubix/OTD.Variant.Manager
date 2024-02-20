@@ -2,7 +2,11 @@ using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
+using Avalonia.Threading;
 using CommunityToolkit.Mvvm.ComponentModel;
+using HidSharp;
+using OpenTabletDriver.Desktop.Contracts;
+using OpenTabletDriver.Desktop.RPC;
 using OTD.Variant.Manager.Configurations;
 
 namespace OTD.Variant.Manager.UX.ViewModels.Menus;
@@ -33,27 +37,32 @@ public partial class DeviceSelectionViewModel : NavigableViewModel
     private string _searchBarWatermark = "Search...";
 
     [ObservableProperty]
-    private ObservableCollection<MenuEntryViewModel> _currentDeviceEntries = new();
+    private ObservableCollection<MenuEntryViewModel> _currentDeviceEntries;
+
+    #region Screens
+
+    [ObservableProperty]
+    private VariantSelectionViewModel _variantSelectionScreenViewModel = new();
+
+    #endregion
 
     #endregion
 
     // Design-time constructor.
-    public DeviceSelectionViewModel()
-    {
-        _manufacturer = "I.";
-        _path = "Manufacturers > I.";
-        _variantRepository = null!;
-        _deviceEntries = new List<MenuEntryViewModel>();
-
-        NextViewModel = this;
-        CanGoBack = false;
-    }
+    public DeviceSelectionViewModel() : this(null!) {}
 
     public DeviceSelectionViewModel(VariantRepository variantRepository)
     {
-        _manufacturer = string.Empty;
+        _manufacturer = "x";
+        _path = "Manufacturers > x";
+
         _variantRepository = variantRepository;
         _deviceEntries = new List<MenuEntryViewModel>();
+        _currentDeviceEntries = new ObservableCollection<MenuEntryViewModel>();
+
+        _variantSelectionScreenViewModel = new VariantSelectionViewModel(variantRepository);
+
+        InitializeEvents(true);
 
         NextViewModel = this;
         CanGoBack = true;
@@ -64,20 +73,29 @@ public partial class DeviceSelectionViewModel : NavigableViewModel
         _manufacturer = manufacturer;
         _path = $"Manufacturers > {manufacturer}";
         _variantRepository = variantRepository;
-        _deviceEntries = new List<MenuEntryViewModel>();
+        _deviceEntries = _variantRepository.GetDevices(manufacturer)
+            .Select(device => new MenuEntryViewModel(device));
 
+        _currentDeviceEntries = new ObservableCollection<MenuEntryViewModel>(_deviceEntries);
+
+        _variantSelectionScreenViewModel = new VariantSelectionViewModel(variantRepository);
+
+        InitializeEvents(true);
         StartSelection(manufacturer);
 
         NextViewModel = this;
         CanGoBack = true;
     }
 
-    private void InitializeEvents()
+    private void InitializeEvents(bool doInitBackRequested = false)
     {
         foreach (var entry in CurrentDeviceEntries)
         {
-            entry.Clicked += OnManufacturerEntryClicked;
+            entry.Clicked += OnDeviceEntryClicked;
         }
+
+        if (doInitBackRequested)
+            VariantSelectionScreenViewModel.BackRequested += OnBackRequested;
     }
 
     #region Events
@@ -104,14 +122,15 @@ public partial class DeviceSelectionViewModel : NavigableViewModel
 
     public void StartSelection(string manufacturer)
     {
+        UnsubscribeEvents();
+
         Manufacturer = manufacturer;
+        Path = $"Manufacturers > {Manufacturer}";
 
         _deviceEntries = _variantRepository.GetDevices(manufacturer)
             .Select(device => new MenuEntryViewModel(device));
 
         CurrentDeviceEntries = new ObservableCollection<MenuEntryViewModel>(_deviceEntries);
-
-        Path = $"Manufacturers > {Manufacturer}";
 
         var random = new Random();
         var randomIndex = random.Next(CurrentDeviceEntries.Count);
@@ -127,6 +146,8 @@ public partial class DeviceSelectionViewModel : NavigableViewModel
     protected override void GoBack()
     {
         BackRequested?.Invoke(this, EventArgs.Empty);
+
+        UnsubscribeEvents();
     }
 
     #endregion
@@ -135,13 +156,21 @@ public partial class DeviceSelectionViewModel : NavigableViewModel
 
     #region Event Handlers
 
+    private void OnBackRequested(object? sender, EventArgs e)
+    {
+        if (sender is VariantSelectionViewModel)
+        {
+            NextViewModel = this;
+        }
+    }
+
     private void OnSearchTextChanged(string searchText)
     {
         CurrentDeviceEntries = new ObservableCollection<MenuEntryViewModel>(
             _deviceEntries.Where(entry => entry.Label.Contains(searchText, StringComparison.OrdinalIgnoreCase)));
     }
 
-    private void OnManufacturerEntryClicked(object? sender, EventArgs e)
+    private void OnDeviceEntryClicked(object? sender, EventArgs e)
     {
         if (sender is MenuEntryViewModel entry)
         {
@@ -151,9 +180,26 @@ public partial class DeviceSelectionViewModel : NavigableViewModel
             var variantEntriesCollection = new ObservableCollection<MenuEntryViewModel>(variantEntries);
 
             // then set the current variant entries in the variant selection view model.
-            // _variantSelectionScreenViewModel.CurrentVariantEntries = variantEntriesCollection;
-            // NextViewModel = _variantSelectionScreenViewModel;
+            VariantSelectionScreenViewModel.CurrentVariantEntries = variantEntriesCollection;
+            VariantSelectionScreenViewModel.StartSelection(Manufacturer, entry.Label);
+
+            Dispatcher.UIThread.Post(() => NextViewModel = VariantSelectionScreenViewModel);
         }
+    }
+
+    #endregion
+
+    #region Disposal
+
+    public void UnsubscribeEvents(bool doDisposeBackRequested = false)
+    {
+        foreach (var entry in CurrentDeviceEntries)
+        {
+            entry.Clicked -= OnDeviceEntryClicked;
+        }
+
+        if (doDisposeBackRequested)
+            VariantSelectionScreenViewModel.BackRequested -= OnBackRequested;
     }
 
     #endregion
