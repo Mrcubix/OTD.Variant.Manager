@@ -57,7 +57,7 @@ public class PluginConfigurationProvider
                 var configs = new List<TabletVariant>();
 
                 // Need to first create the stock variant.
-                var stockVariant = new TabletVariant($"{deviceDirectory.Name} Stock");
+                var stockVariant = new TabletVariant($"{manufacturerDirectory.Name} {deviceDirectory.Name} Stock");
                 configs.Add(stockVariant);
 
                 // Need to first make sure we only process JSON files.
@@ -117,7 +117,7 @@ public class PluginConfigurationProvider
         if (string.IsNullOrEmpty(variantName))
             variantName = $"{deviceName}.json";
 
-        return Path.Combine(SourceConfigsDirectory, deviceName, variantName);
+        return Path.Combine(SourceConfigsDirectory, manufacturer, deviceName, variantName);
     }
 
     /// <summary>
@@ -148,11 +148,28 @@ public class PluginConfigurationProvider
         if (!IsReady)
             return null;
 
+        var variant = GetConfigurationVariant(manufacturer, deviceName, variantName);
+
+        return variant?.Configuration;
+    }
+
+    /// <summary>
+    ///   Get the configuration variant for the specified manufacturer, device, and variant.
+    /// </summary>
+    /// <param name="manufacturer">The name of the manufacturer.</param>
+    /// <param name="deviceName">The name of the device.</param>
+    /// <param name="variantName">The name of the variant.</param>
+    /// <returns>The configuration variant for the specified manufacturer, device, and variant.</returns>
+    public TabletVariant? GetConfigurationVariant(string manufacturer, string deviceName, string variantName)
+    {
+        if (!IsReady)
+            return null;
+
         if (ConfigurationsByManufacturer.TryGetValue(manufacturer, out var configsByDevice))
         {
             if (configsByDevice.TryGetValue(deviceName, out var configs))
             {
-                return configs.FirstOrDefault(c => c.Name == variantName)?.Configuration;
+                return configs.FirstOrDefault(c => c.Name == $"{manufacturer} {deviceName} {variantName}");
             }
         }
 
