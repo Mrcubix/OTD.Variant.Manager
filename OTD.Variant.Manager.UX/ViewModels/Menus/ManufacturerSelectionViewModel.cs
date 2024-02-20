@@ -22,12 +22,6 @@ public partial class ManufacturerSelectionViewModel : NavigableViewModel
 
     private VariantRepository _variantRepository;
 
-    #region Screens
-
-    private DeviceSelectionViewModel _deviceSelectionScreenViewModel;
-
-    #endregion
-
     #endregion
 
     #region Observable fields
@@ -37,6 +31,13 @@ public partial class ManufacturerSelectionViewModel : NavigableViewModel
 
     [ObservableProperty]
     private ObservableCollection<MenuEntryViewModel> _currentManufacturerEntries = new();
+
+    #region Screens
+
+    [ObservableProperty]
+    private DeviceSelectionViewModel _deviceSelectionScreenViewModel;
+
+    #endregion
 
     #endregion
 
@@ -131,10 +132,10 @@ public partial class ManufacturerSelectionViewModel : NavigableViewModel
             var deviceEntries = devices.Select(device => new MenuEntryViewModel(device));
             var deviceEntriesCollection = new ObservableCollection<MenuEntryViewModel>(deviceEntries);
 
-            _deviceSelectionScreenViewModel.CurrentDeviceEntries = deviceEntriesCollection;
-            _deviceSelectionScreenViewModel.StartSelection(entry.Label);
-            
-            NextViewModel = _deviceSelectionScreenViewModel;
+            DeviceSelectionScreenViewModel.CurrentDeviceEntries = deviceEntriesCollection;
+            DeviceSelectionScreenViewModel.StartSelection(entry.Label);
+
+            NextViewModel = DeviceSelectionScreenViewModel;
         }
     }
 
