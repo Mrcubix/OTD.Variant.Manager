@@ -1,0 +1,26 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:vm="using:OTD.Variant.Manager.UX.ViewModels.Windows"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        mc:Ignorable="d" d:DesignWidth="450" d:DesignHeight="200"
+        MinWidth="450" MinHeight="200" Width="450" Height="200"
+        x:Class="OTD.Variant.Manager.UX.Views.OneButtonDialogWindow"
+        WindowStartupLocation="CenterScreen"
+        Icon="/Assets/avalonia-logo.ico"
+        Title="{Binding Title}"
+        Background="{StaticResource BodyColorBrush}"
+        x:DataType="vm:OneButtonWindowViewModel">
+
+        <Grid ColumnDefinitions="*, Auto, *" RowDefinitions="*, Auto, 50, Auto, *">
+          <TextBlock Text="{Binding Content}" Foreground="White" TextWrapping="Wrap"
+                     HorizontalAlignment="Center" VerticalAlignment="Center"
+                     Grid.Column="0" Grid.ColumnSpan="3" Grid.Row="1" />
+
+          <Button Content="OK" Command="{Binding ReturnResult}" CommandParameter="true"
+                  Foreground="White" Width="100"
+                  HorizontalAlignment="Right" VerticalAlignment="Center"
+                  HorizontalContentAlignment="Center" Grid.Column="1" Grid.Row="3" />
+        </Grid>
+
+</Window>
