@@ -1,9 +1,7 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Collections.ObjectModel;
-using System.Linq;
 using CommunityToolkit.Mvvm.ComponentModel;
-using OTD.Variant.Manager.Configurations;
+using OpenTabletDriver.Desktop.Contracts;
+using OpenTabletDriver.Desktop.RPC;
 using OTD.Variant.Manager.UX.ViewModels.Menus;
 
 namespace OTD.Variant.Manager.UX.ViewModels;
@@ -12,11 +10,17 @@ namespace OTD.Variant.Manager.UX.ViewModels;
 
 public partial class MainViewModel : NavigableViewModel
 {
+    #region Observable fields
+
+    [ObservableProperty]
+    private ManufacturerSelectionViewModel _manufacturerSelectionViewModel = new();
+
+    #endregion
+
     #region Constructors
 
     public MainViewModel()
     {
-        NextViewModel = new ManufacturerSelectionViewModel();
         CanGoBack = false;
     }
 

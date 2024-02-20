@@ -4,6 +4,7 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:vm="clr-namespace:OTD.Variant.Manager.UX.ViewModels"
              xmlns:menus="clr-namespace:OTD.Variant.Manager.UX.Controls.Menus"
+             xmlns:views="clr-namespace:OTD.Variant.Manager.UX.Views.Menus"
              mc:Ignorable="d" d:DesignWidth="720" d:DesignHeight="600"
              x:Class="OTD.Variant.Manager.UX.Views.MainView"
              x:DataType="vm:MainViewModel">
@@ -12,7 +13,7 @@
   </Design.DataContext>
 
   <Grid>
-    <ContentControl Content="{Binding NextViewModel}" />
+    <views:ManufacturerSelectionView DataContext="{Binding ManufacturerSelectionViewModel}" />
   </Grid>
 
 </UserControl>
