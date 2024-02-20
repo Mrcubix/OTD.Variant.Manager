@@ -19,7 +19,7 @@ public partial class DeviceSelectionViewModel : NavigableViewModel
 
     private string _searchText = string.Empty;
 
-    private IEnumerable<MenuEntryViewModel> _deviceEntries;
+    private List<MenuEntryViewModel> _deviceEntries;
 
     private VariantRepository _variantRepository;
 
@@ -72,9 +72,11 @@ public partial class DeviceSelectionViewModel : NavigableViewModel
     {
         _manufacturer = manufacturer;
         _path = $"Manufacturers > {manufacturer}";
+
         _variantRepository = variantRepository;
+
         _deviceEntries = _variantRepository.GetDevices(manufacturer)
-            .Select(device => new MenuEntryViewModel(device));
+            .Select(device => new MenuEntryViewModel(device)).ToList();
 
         _currentDeviceEntries = new ObservableCollection<MenuEntryViewModel>(_deviceEntries);
 
@@ -89,7 +91,7 @@ public partial class DeviceSelectionViewModel : NavigableViewModel
 
     private void InitializeEvents(bool doInitBackRequested = false)
     {
-        foreach (var entry in CurrentDeviceEntries)
+        foreach (var entry in _deviceEntries)
         {
             entry.Clicked += OnDeviceEntryClicked;
         }
@@ -112,6 +114,8 @@ public partial class DeviceSelectionViewModel : NavigableViewModel
         set
         {
             SetProperty(ref _searchText, value);
+            OnPropertyChanged(nameof(SearchText));
+
             OnSearchTextChanged(value);
         }
     }
@@ -122,23 +126,35 @@ public partial class DeviceSelectionViewModel : NavigableViewModel
 
     public void StartSelection(string manufacturer)
     {
-        UnsubscribeEvents();
+        // Selected manufacturer has changed.
+        if (Manufacturer != manufacturer)
+        {
+            // Unsubscribe events on previous device entries.
+            UnsubscribeEvents();
+        
+            Manufacturer = manufacturer;
+            Path = $"Manufacturers > {Manufacturer}";
 
-        Manufacturer = manufacturer;
-        Path = $"Manufacturers > {Manufacturer}";
+            // Reset search text.
+            SearchText = string.Empty;
 
-        _deviceEntries = _variantRepository.GetDevices(manufacturer)
-            .Select(device => new MenuEntryViewModel(device));
+            // Gather devices into entries and set the current device entries.
+            _deviceEntries = _variantRepository.GetDevices(manufacturer)
+                .Select(device => new MenuEntryViewModel(device)).ToList();
 
-        CurrentDeviceEntries = new ObservableCollection<MenuEntryViewModel>(_deviceEntries);
+            // Set the current device entries.
+            CurrentDeviceEntries = new ObservableCollection<MenuEntryViewModel>(_deviceEntries);
 
-        var random = new Random();
-        var randomIndex = random.Next(CurrentDeviceEntries.Count);
+            // Show a random device in the search bar watermark.
+            var random = new Random();
+            var randomIndex = random.Next(CurrentDeviceEntries.Count);
 
-        // Select a random manufacturer to be featured in the watermark.
-        SearchBarWatermark = $"Search \"{CurrentDeviceEntries[randomIndex].Label}\"...";
+            // Select a random manufacturer to be featured in the watermark.
+            SearchBarWatermark = $"Search \"{CurrentDeviceEntries[randomIndex].Label}\"...";
 
-        InitializeEvents();
+            // Subscribe events on new device entries.
+            InitializeEvents();
+        }
     }
 
     #region Parent Implementation
@@ -146,8 +162,6 @@ public partial class DeviceSelectionViewModel : NavigableViewModel
     protected override void GoBack()
     {
         BackRequested?.Invoke(this, EventArgs.Empty);
-
-        UnsubscribeEvents();
     }
 
     #endregion
@@ -174,16 +188,10 @@ public partial class DeviceSelectionViewModel : NavigableViewModel
     {
         if (sender is MenuEntryViewModel entry)
         {
-            // Gather the variant entries and then set the current variant entries in the variant selection view model.
-            var variants = _variantRepository.GetVariants(Manufacturer, entry.Label);
-            var variantEntries = variants.Select(variant => new MenuEntryViewModel(variant));
-            var variantEntriesCollection = new ObservableCollection<MenuEntryViewModel>(variantEntries);
-
-            // then set the current variant entries in the variant selection view model.
-            VariantSelectionScreenViewModel.CurrentVariantEntries = variantEntriesCollection;
             VariantSelectionScreenViewModel.StartSelection(Manufacturer, entry.Label);
 
-            Dispatcher.UIThread.Post(() => NextViewModel = VariantSelectionScreenViewModel);
+            //Dispatcher.UIThread.Post(() => NextViewModel = VariantSelectionScreenViewModel);
+            NextViewModel = VariantSelectionScreenViewModel;
         }
     }
 
@@ -193,7 +201,7 @@ public partial class DeviceSelectionViewModel : NavigableViewModel
 
     public void UnsubscribeEvents(bool doDisposeBackRequested = false)
     {
-        foreach (var entry in CurrentDeviceEntries)
+        foreach (var entry in _deviceEntries)
         {
             entry.Clicked -= OnDeviceEntryClicked;
         }

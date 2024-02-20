@@ -18,7 +18,7 @@ public partial class ManufacturerSelectionViewModel : NavigableViewModel
 
     private string _searchText = string.Empty;
 
-    private IEnumerable<MenuEntryViewModel> _manufacturerEntries;
+    private List<MenuEntryViewModel> _manufacturerEntries;
 
     private VariantRepository _variantRepository;
 
@@ -49,7 +49,9 @@ public partial class ManufacturerSelectionViewModel : NavigableViewModel
         _variantRepository = new VariantRepository(pluginConfigurationProvider);
 
         _manufacturerEntries = _variantRepository.GetManufacturers()
-            .Select(manufacturer => new MenuEntryViewModel(manufacturer));
+            .Select(manufacturer => new MenuEntryViewModel(manufacturer)).ToList();
+
+        SubscriveEvents();
 
         _currentManufacturerEntries = new ObservableCollection<MenuEntryViewModel>(_manufacturerEntries);
 
@@ -59,8 +61,6 @@ public partial class ManufacturerSelectionViewModel : NavigableViewModel
         // Select a random manufacturer to be featured in the watermark.
         SearchBarWatermark = $"Search \"{_currentManufacturerEntries[randomIndex].Label}\"...";
 
-        InitializeEvents();
-
         _deviceSelectionScreenViewModel = new DeviceSelectionViewModel(_variantRepository);
         _deviceSelectionScreenViewModel.BackRequested += OnBackRequested;
         
@@ -68,9 +68,9 @@ public partial class ManufacturerSelectionViewModel : NavigableViewModel
         CanGoBack = false;
     }
 
-    private void InitializeEvents()
+    private void SubscriveEvents()
     {
-        foreach (var entry in CurrentManufacturerEntries)
+        foreach (var entry in _manufacturerEntries)
         {
             entry.Clicked += OnManufacturerEntryClicked;
         }
@@ -92,6 +92,8 @@ public partial class ManufacturerSelectionViewModel : NavigableViewModel
         set
         {
             SetProperty(ref _searchText, value);
+            OnPropertyChanged(nameof(SearchText));
+
             OnSearchTextChanged(value);
         }
     }
@@ -120,21 +122,14 @@ public partial class ManufacturerSelectionViewModel : NavigableViewModel
     private void OnSearchTextChanged(string searchText)
     {
         CurrentManufacturerEntries = new ObservableCollection<MenuEntryViewModel>(
-            _manufacturerEntries.Where(entry => entry.Label.Contains(searchText)));
+            _manufacturerEntries.Where(entry => entry.Label.Contains(searchText, StringComparison.OrdinalIgnoreCase)));
     }
 
     private void OnManufacturerEntryClicked(object? sender, EventArgs e)
     {
         if (sender is MenuEntryViewModel entry)
         {
-            // Gather the device entries then set the current device entries. in the device selection view model.
-            var devices = _variantRepository.GetDevices(entry.Label);
-            var deviceEntries = devices.Select(device => new MenuEntryViewModel(device));
-            var deviceEntriesCollection = new ObservableCollection<MenuEntryViewModel>(deviceEntries);
-
-            DeviceSelectionScreenViewModel.CurrentDeviceEntries = deviceEntriesCollection;
             DeviceSelectionScreenViewModel.StartSelection(entry.Label);
-
             NextViewModel = DeviceSelectionScreenViewModel;
         }
     }

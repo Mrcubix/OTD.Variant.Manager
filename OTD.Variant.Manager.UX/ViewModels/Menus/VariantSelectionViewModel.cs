@@ -34,7 +34,7 @@ public partial class VariantSelectionViewModel : NavigableViewModel
 
     private string _searchText = string.Empty;
 
-    private IEnumerable<MenuEntryViewModel> _variantEntries;
+    private List<MenuEntryViewModel> _variantEntries;
 
     private VariantRepository _variantRepository;
 
@@ -79,6 +79,8 @@ public partial class VariantSelectionViewModel : NavigableViewModel
         _variantEntries = new List<MenuEntryViewModel>();
         _driverDaemon = new RpcClient<IDriverDaemon>("OpenTabletDriver.Daemon");
 
+        InitializeEvents();
+
         NextViewModel = this;
         CanGoBack = true;
     }
@@ -96,6 +98,8 @@ public partial class VariantSelectionViewModel : NavigableViewModel
         StartSelection(manufacturer, device);
         AttemptConnection();
 
+        InitializeEvents();
+
         NextViewModel = this;
         CanGoBack = true;
     }
@@ -110,7 +114,7 @@ public partial class VariantSelectionViewModel : NavigableViewModel
 
     private void SubscribeEvents()
     {
-        foreach (var entry in CurrentVariantEntries)
+        foreach (var entry in _variantEntries)
         {
             entry.Clicked += OnVariantEntryClicked;
         }
@@ -139,6 +143,8 @@ public partial class VariantSelectionViewModel : NavigableViewModel
         set
         {
             SetProperty(ref _searchText, value);
+            OnPropertyChanged(nameof(SearchText));
+            
             OnSearchTextChanged(value);
         }
     }
@@ -160,23 +166,39 @@ public partial class VariantSelectionViewModel : NavigableViewModel
 
     public void StartSelection(string manufacturer, string device)
     {
-        Manufacturer = manufacturer;
-        Device = device;
-        Path = $"Manufacturers > {manufacturer} > {device}";
+        // Selected manufacturer or device has changed.
+        if (Manufacturer != manufacturer 
+            || Device != device)
+        {
+            // Unsubscribe from the previous events.
+            UnsubscribeEvents();
 
-        _variantEntries = _variantRepository.GetVariants(manufacturer, device)
-            .Select(variant => new MenuEntryViewModel(variant));
+            // Update the manufacturer and device.
+            Manufacturer = manufacturer;
+            Device = device;
+            Path = $"Manufacturers > {manufacturer} > {device}";
 
-        CurrentVariantEntries = new ObservableCollection<MenuEntryViewModel>(_variantEntries);
+            // Reset the search text.
+            SearchText = string.Empty;
 
-        var random = new Random();
-        var randomIndex = random.Next(CurrentVariantEntries.Count);
+            // Get the variants for the selected manufacturer and device.
+            _variantEntries = _variantRepository.GetVariants(manufacturer, device)
+                .Select(variant => new MenuEntryViewModel(variant)).ToList();
 
-        // Select a random manufacturer to be featured in the watermark.
-        SearchBarWatermark = $"Search \"{CurrentVariantEntries[randomIndex].Label}\"...";
-        AttemptConnection();
+            CurrentVariantEntries = new ObservableCollection<MenuEntryViewModel>(_variantEntries);
 
-        SubscribeEvents();
+            // Select a random variant to be featured in the watermark.
+            var random = new Random();
+            var randomIndex = random.Next(CurrentVariantEntries.Count);
+
+            SearchBarWatermark = $"Search \"{CurrentVariantEntries[randomIndex].Label}\"...";
+
+            // Attempt to connect to the driver.
+            AttemptConnection();
+
+            // Subscribe to the new events.
+            SubscribeEvents();
+        }
     }
 
     #endregion
@@ -387,8 +409,6 @@ public partial class VariantSelectionViewModel : NavigableViewModel
     protected override void GoBack()
     {
         BackRequested?.Invoke(this, EventArgs.Empty);
-
-        UnsubscribeEvents();
     }
 
     #endregion
@@ -421,9 +441,9 @@ public partial class VariantSelectionViewModel : NavigableViewModel
 
     #region Disposal
 
-    public void UnsubscribeEvents(bool doDisposeBackRequested = false)
+    public void UnsubscribeEvents()
     {
-        foreach (var entry in CurrentVariantEntries)
+        foreach (var entry in _variantEntries)
         {
             entry.Clicked -= OnVariantEntryClicked;
         }
