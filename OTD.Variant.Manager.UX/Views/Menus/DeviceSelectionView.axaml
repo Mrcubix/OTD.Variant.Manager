@@ -61,9 +61,9 @@
       </DataTemplate>
 
       <!-- The next page in question -->
-      <!--<DataTemplate DataType="vm:DeviceSelectionViewModel">
-        <views:DeviceSelectionView />
-      </DataTemplate>-->
+      <DataTemplate DataType="vm:VariantSelectionViewModel">
+        <views:VariantSelectionView />
+      </DataTemplate>
 
     </ContentControl.DataTemplates>
   </ContentControl>
